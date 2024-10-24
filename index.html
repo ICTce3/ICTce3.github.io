@@ -6,11 +6,15 @@
   <title>Task Planner</title>
   <style>
     body {
-        display: flex;
-  justify-content: space-between;
-  font-family: Arial, sans-serif;
-  background-color: #f4f4f4; /* Light background color for the body */
-  padding: 20px;
+      display: flex;
+       flex-direction: column; /* Stack elements vertically */
+      align-items: center; /* Center content horizontally */
+    justify-content: space-between;
+    font-family: Arial, sans-serif;
+    background-image: url('your-image-url.jpg'); /* Replace with your image URL */
+    background-size: cover; /* Cover the entire body */
+    background-position: center; /* Center the image */
+    padding: 20px;
     }
     h1 {
   color: #05529b; /* Darker color for the heading */
@@ -70,27 +74,28 @@ td {
 <div>
   <h1>Task Planner</h1>
   <div class="notification" id="notification"></div>
-
+  <div style="margin-bottom: 20px;">
+    <input type="text" id="filterInput" placeholder="Filter Hot Jobs" style="width: 150px;" oninput="filterHotJobs()">
+    <button onclick="filterHotJobs()">Filter</button>
+  </div>
   <table id="taskTable">
     <thead>
       <tr>
-        <th>Part ID</th>
+        <th style="width: 120px;">Part ID</th>
         <th>Prom Date</th>
         <th>Owing</th>
-        <th style="width: 140px;">Hot Job</th>
+        <th style="width: 140px;">Description</th>
         <th>Status</th>
-        <th>Prog Time</th>
+        <th style="width: 60px;">Prog Time</th>
         <th>Debug Time (hrs)</th>
         <th>Test Time/Board (mins)</th>
         <th>Total Test Time (mins)</th>
-        <th>Total Test Time (hrs)</th>
+        <th style="width: 80px;">Total Test Time (hrs)</th>
         <th style="width: 100px;">clinkPhase</th>
         <th>Debugging</th>
         <th style="width: 100px;">Testing</th>
         <th>Completed</th>
-        <th>Prog</th>
-        <th>Debug</th>
-        <th>Test</th>
+        
         <th>Hours used</th>
         <th>Notes</th>
         <th>Actions</th>
@@ -105,16 +110,34 @@ td {
   <button onclick="addRow()">Add Row</button>
 </div>
 
-<div class="totalWorkTable">
-  <div class="totalWorkHeading">Total Work</div>
+<style>
+  /* Existing styles */
+  /* Add the following styles for the delete button */
+  .deleteButton {
+    background-color: red; /* Red background */
+    color: white; /* White text */
+    border: none;
+    cursor: pointer;
+    padding: 5px 8px; /* Reduced padding for a smaller button */
+    font-size: 0.8em; /* Smaller font size */
+    border-radius: 3px; /* Slight rounding of corners */
+  }
+</style>
+
+<div class="totalWorkTable" style="margin-left: 20px;">
+  <div class="totalWorkHeading" style="color: #05529b; font-size: 1.5em; margin-bottom: 10px;">
+    Total Work
+  </div>
+  <button onclick="addTeamMemberRow()">Add Team Member</button>
   <table>
     <thead>
       <tr>
         <th>TEAM MEMBER</th>
         <th>HOURS</th>
+        <th>ACTIONS</th>
       </tr>
     </thead>
-    <tbody>
+    <tbody id="totalWorkTableBody">
       <tr>
         <td>
           <select class="teamMemberSelect" onchange="updateHours(this)">
@@ -128,6 +151,7 @@ td {
           </select>
         </td>
         <td><input type="number" placeholder="Hours" class="teamHoursInput" readonly></td>
+        <td><button class="deleteButton" onclick="deleteTeamMemberRow(this)">Delete</button></td>
       </tr>
       <tr>
         <td>
@@ -142,11 +166,12 @@ td {
           </select>
         </td>
         <td><input type="number" placeholder="Hours" class="teamHoursInput" readonly></td>
+        <td><button class="deleteButton" onclick="deleteTeamMemberRow(this)">Delete</button></td>
       </tr>
       <tr>
         <td>
           <select class="teamMemberSelect" onchange="updateHours(this)">
-            option value="">Select Member</option>
+            <option value="">Select Member</option>
             <option value="Alpha">Alpha</option>
             <option value="Beta">Beta</option>
             <option value="Gamma">Gamma</option>
@@ -156,13 +181,52 @@ td {
           </select>
         </td>
         <td><input type="number" placeholder="Hours" class="teamHoursInput" readonly></td>
+        <td><button class="deleteButton" onclick="deleteTeamMemberRow(this)">Delete</button></td>
       </tr>
     </tbody>
   </table>
 </div>
 
 <script>
-  const statusOptions = ["", "COMPLETED", "NEED TESTING", "NEED PROGRAMMING", "DEBUGGING STARTED"];
+  function addTeamMemberRow() {
+    const tableBody = document.getElementById('totalWorkTableBody');
+    const newRow = document.createElement('tr');
+    newRow.innerHTML = `
+      <td>
+        <select class="teamMemberSelect" onchange="updateHours(this)">
+          <option value="">Select Member</option>
+          <option value="Alpha">Alpha</option>
+          <option value="Beta">Beta</option>
+          <option value="Gamma">Gamma</option>
+          <option value="Delta">Delta</option>
+          <option value="Epsilon">Epsilon</option>
+          <option value="Zeta">Zeta</option>
+        </select>
+      </td>
+      <td><input type="number" placeholder="Hours" class="teamHoursInput" readonly></td>
+      <td><button class="deleteButton" onclick="deleteTeamMemberRow(this)">Delete</button></td>
+    `;
+    tableBody.appendChild(newRow);
+  }
+
+  function deleteTeamMemberRow(button) {
+    const row = button.closest('tr');
+    row.remove();
+  }
+
+  function updateHours(selectElement) {
+    const selectedTeamMember = selectElement.value;
+    const hoursInput = selectElement.closest('tr').querySelector('.teamHoursInput');
+    const tableBody = document.querySelector("#taskTable tbody");
+    let totalHours = 0;
+
+    hoursInput.value = totalHours; // Update the hours input with the total
+  }
+</script>
+
+
+<script>
+  const statusOptions = ["", "NEED PROGRAMMING", "DEBUGGING STARTED", "NEED TESTING", " TESTING STARTED", "COMPLETED"];
   const hotJobOptions = ["", "HOT JOB", "TODAY", "SEE NOTES"];
   const teamOptions = ["", "Alpha", "Beta","Gamma","Delta","Epsilon","Zeta"];
 
@@ -215,9 +279,7 @@ td {
             ${teamOptions.map(option => `<option ${task.team === option ? 'selected' : ''}>${option}</option>`).join('')}
           </select>
         </td>
-        <td><input type="text" value="${task.prog}" class="progInput"></td>
-        <td><input type="text" value="${task.debug}" class="debugInput"></td>
-        <td><input type="text" value="${task.test}" class="testInput"></td>
+      
         <td><input type="number" value="${task.hours}" class="hoursInput"></td>
         <td><input type="text" value="${task.notes}" class="notesInput"></td>
         <td><button class="deleteButton" onclick="deleteRow(this)">Delete</button></td>
@@ -225,6 +287,21 @@ td {
       tableBody.appendChild(row);
     });
   }
+  function filterHotJobs() {
+    const filterValue = document.getElementById('filterInput').value.toLowerCase();
+    const tableBody = document.querySelector("#taskTable tbody");
+    const rows = tableBody.querySelectorAll("tr");
+
+    rows.forEach(row => {
+        const hotJobCell = row.querySelector(".hotJobSelect").value.toLowerCase();
+        if (hotJobCell.includes(filterValue) || filterValue === "") {
+            row.style.display = ""; // Show the row if it matches
+        } else {
+            row.style.display = "none"; // Hide the row if it doesn't match
+        }
+    });
+}
+
 
   function saveTasks() {
     const tableBody = document.querySelector("#taskTable tbody");
@@ -245,9 +322,6 @@ td {
         debugging: row.querySelector(".debuggingSelect").value,
         testing: row.querySelector(".testingSelect").value,
         team: row.querySelector(".teamSelect").value,
-        prog: row.querySelector(".progInput").value,
-        debug: row.querySelector(".debugInput").value,
-        test: row.querySelector(".testInput").value,
         hours: row.querySelector(".hoursInput").value,
         notes: row.querySelector(".notesInput").value,
       };
@@ -308,9 +382,7 @@ td {
           ${teamOptions.map(option => `<option>${option}</option>`).join('')}
         </select>
       </td>
-      <td><input type="text" class="progInput"></td>
-      <td><input type="text" class="debugInput"></td>
-      <td><input type="text" class="testInput"></td>
+      
       <td><input type="number" class="hoursInput"></td>
       <td><input type="text" class="notesInput"></td>
       <td><button class="deleteButton" onclick="deleteRow(this)">Delete</button></td>
@@ -398,4 +470,3 @@ td {
 </script>
 </body>
 </html>
-
