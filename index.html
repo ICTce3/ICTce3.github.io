@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Task Planner</title>
+  <style>
+    body {
+        display: flex;
+  justify-content: space-between;
+  font-family: Arial, sans-serif;
+  background-color: #f4f4f4; /* Light background color for the body */
+  padding: 20px;
+    }
+    h1 {
+  color: #05529b; /* Darker color for the heading */
+}
+    table {
+        width: 100%;
+  border-collapse: collapse;
+  margin-top: 20px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+    }
+    th {
+  background-color: #022244; /* Blue header background */
+  color: white; /* White text color for headers */
+}
+
+td {
+  padding: 10px;
+  text-align: left;
+  border: 1px solid #dfd5d5b6;
+  background-color: #fff; /* White background for cells */
+}
+
+    
+    select, input {
+      width: 100%;
+    }
+    button {
+      margin-top: 20px;
+      cursor: pointer;
+      padding: 10px;
+    }
+    .hotJobRow {
+      background-color: lightcoral;
+    }
+    .todayRow {
+      background-color: lightblue;
+    }
+    .duplicate {
+      background-color: orange;
+    }
+    .deleteButton {
+      background-color: red;
+      color: white;
+      border: none;
+      cursor: pointer;
+      padding: 5px 10px;
+    }
+    .notification {
+      color: green;
+      margin-top: 20px;
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<div>
+  <h1>Task Planner</h1>
+  <div class="notification" id="notification"></div>
+
+  <table id="taskTable">
+    <thead>
+      <tr>
+        <th>Part ID</th>
+        <th>Prom Date</th>
+        <th>Owing</th>
+        <th style="width: 140px;">Hot Job</th>
+        <th>Status</th>
+        <th>Prog Time</th>
+        <th>Debug Time (hrs)</th>
+        <th>Test Time/Board (mins)</th>
+        <th>Total Test Time (mins)</th>
+        <th>Total Test Time (hrs)</th>
+        <th>Clink Phase</th>
+        <th>Debugging</th>
+        <th style="width: 100px;">Testing</th>
+        <th>Completed</th>
+        <th>Prog</th>
+        <th>Debug</th>
+        <th>Test</th>
+        <th>Hours</th>
+        <th>Notes</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Dynamic rows will go here -->
+    </tbody>
+  </table>
+
+  <button onclick="saveTasks()">Save</button>
+  <button onclick="addRow()">Add Row</button>
+</div>
+
+<div class="totalWorkTable">
+  <div class="totalWorkHeading">Total Work</div>
+  <table>
+    <thead>
+      <tr>
+        <th>TEAM MEMBER</th>
+        <th>HOURS</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <select class="teamMemberSelect" onchange="updateHours(this)">
+            <option value="">Select Member</option>
+            <option value="Alpha">Alpha</option>
+            <option value="Beta">Beta</option>
+            <option value="Gamma">Gamma</option>
+            <option value="Delta">Delta</option>
+            <option value="Epsilon">Epsilon</option>
+            <option value="Zeta">Zeta</option>
+          </select>
+        </td>
+        <td><input type="number" placeholder="Hours" class="teamHoursInput" readonly></td>
+      </tr>
+      <tr>
+        <td>
+          <select class="teamMemberSelect" onchange="updateHours(this)">
+            <option value="">Select Member</option>
+            <option value="Alpha">Alpha</option>
+            <option value="Beta">Beta</option>
+            <option value="Gamma">Gamma</option>
+            <option value="Delta">Delta</option>
+            <option value="Epsilon">Epsilon</option>
+            <option value="Zeta">Zeta</option>
+          </select>
+        </td>
+        <td><input type="number" placeholder="Hours" class="teamHoursInput" readonly></td>
+      </tr>
+      <tr>
+        <td>
+          <select class="teamMemberSelect" onchange="updateHours(this)">
+            option value="">Select Member</option>
+            <option value="Alpha">Alpha</option>
+            <option value="Beta">Beta</option>
+            <option value="Gamma">Gamma</option>
+            <option value="Delta">Delta</option>
+            <option value="Epsilon">Epsilon</option>
+            <option value="Zeta">Zeta</option>
+          </select>
+        </td>
+        <td><input type="number" placeholder="Hours" class="teamHoursInput" readonly></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<script>
+  const statusOptions = ["", "COMPLETED", "NEED TESTING", "NEED PROGRAMMING", "DEBUGGING STARTED"];
+  const hotJobOptions = ["", "HOT JOB", "TODAY", "SEE NOTES"];
+  const teamOptions = ["", "Alpha", "Beta","Gamma","Delta","Epsilon","Zeta"];
+
+  const storedTasks = JSON.parse(localStorage.getItem('tasks')) || [
+    { partID: "123", promDate: "2024-10-23", owing: "", hotJob: "", status: "COMPLETED", progTime: 5, debugTime: 2, testTime: "", totalTestTime: "", totalTestTimeHrs: "", clinkPhase: "AK", debugging: "", testing: "", team: "AK", prog: "", debug: "", test: "", hours: 5, notes: "All good" },
+    { partID: "456", promDate: "2024-10-24", owing: "", hotJob: "", status: "NEED TESTING", progTime: 3, debugTime: 1, testTime: "", totalTestTime: "", totalTestTimeHrs: "", clinkPhase: "Kiran", debugging: "", testing: "", team: "Kiran", prog: "", debug: "", test: "", hours: 8, notes: "In progress" }
+  ];
+
+  function loadTaskTable() {
+    const tableBody = document.querySelector("#taskTable tbody");
+    tableBody.innerHTML = '';
+    storedTasks.forEach(task => {
+      const row = document.createElement("tr");
+      row.innerHTML = `
+        <td><input type="text" value="${task.partID}" class="partIDInput" oninput="highlightDuplicates()"></td>
+        <td><input type="date" value="${task.promDate}" class="promDateInput"></td>
+        <td><input type="number" value="${task.owing}" class="owingInput" oninput="calculateTotalTestTime()"></td>
+        <td>
+          <select class="hotJobSelect" onchange="highlightRow(this)">
+            ${hotJobOptions.map(option => `<option ${task.hotJob === option ? 'selected' : ''}>${option}</option>`).join('')}
+          </select>
+        </td>
+        <td>
+          <select class="statusSelect" style="width: 200px;">
+            ${statusOptions.map(option => `<option ${task.status === option ? 'selected' : ''}>${option}</option>`).join('')}
+          </select>
+        </td>
+        <td><input type="number" value="${task.progTime}" class="progTimeInput"></td>
+        <td><input type="number" value="${task.debugTime}" class="debugTimeInput"></td>
+        <td><input type="number" value="${task.testTime}" class="testTimeInput" oninput="calculateTotalTestTime()"></td>
+        <td><input type="number" value="${task.totalTestTime}" class="totalTestTimeInput" readonly></td>
+        <td><input type="number" value="${task.totalTestTimeHrs}" class="totalTestTimeHrsInput" readonly></td>
+        <td>
+          <select class="clinkPhaseSelect">
+            ${teamOptions.map(option => `<option ${task.clinkPhase === option ? 'selected' : ''}>${option}</option>`).join('')}
+          </select>
+        </td>
+        <td>
+          <select class="debuggingSelect">
+            ${teamOptions.map(option => `<option ${task.debugging === option ? 'selected' : ''}>${option}</option>`).join('')}
+          </select>
+        </td>
+        <td>
+          <select class="testingSelect">
+            ${teamOptions.map(option => `<option ${task.testing === option ? 'selected' : ''}>${option}</option>`).join('')}
+          </select>
+        </td>
+        <td>
+          <select class="teamSelect">
+            ${teamOptions.map(option => `<option ${task.team === option ? 'selected' : ''}>${option}</option>`).join('')}
+          </select>
+        </td>
+        <td><input type="text" value="${task.prog}" class="progInput"></td>
+        <td><input type="text" value="${task.debug}" class="debugInput"></td>
+        <td><input type="text" value="${task.test}" class="testInput"></td>
+        <td><input type="number" value="${task.hours}" class="hoursInput"></td>
+        <td><input type="text" value="${task.notes}" class="notesInput"></td>
+        <td><button class="deleteButton" onclick="deleteRow(this)">Delete</button></td>
+      `;
+      tableBody.appendChild(row);
+    });
+  }
+
+  function saveTasks() {
+    const tableBody = document.querySelector("#taskTable tbody");
+    const tasks = [];
+    tableBody.querySelectorAll("tr").forEach(row => {
+      const task = {
+        partID: row.querySelector(".partIDInput").value,
+        promDate: row.querySelector(".promDateInput").value,
+        owing: row.querySelector(".owingInput").value,
+        hotJob: row.querySelector(".hotJobSelect").value,
+        status: row.querySelector(".statusSelect").value,
+        progTime: row.querySelector(".progTimeInput").value,
+        debugTime: row.querySelector(".debugTimeInput").value,
+        testTime: row.querySelector(".testTimeInput").value,
+        totalTestTime: row.querySelector(".totalTestTimeInput").value,
+        totalTestTimeHrs: row.querySelector(".totalTestTimeHrsInput").value,
+        clinkPhase: row.querySelector(".clinkPhaseSelect").value,
+        debugging: row.querySelector(".debuggingSelect").value,
+        testing: row.querySelector(".testingSelect").value,
+        team: row.querySelector(".teamSelect").value,
+        prog: row.querySelector(".progInput").value,
+        debug: row.querySelector(".debugInput").value,
+        test: row.querySelector(".testInput").value,
+        hours: row.querySelector(".hoursInput").value,
+        notes: row.querySelector(".notesInput").value,
+      };
+      tasks.push(task);
+    });
+    localStorage.setItem('tasks', JSON.stringify(tasks));
+    showNotification("Tasks saved successfully!");
+  }
+
+  function showNotification(message) {
+    const notification = document.getElementById('notification');
+    notification.innerText = message;
+    notification.style.display = 'block';
+    setTimeout(() => {
+      notification.style.display = 'none';
+    }, 3000);
+  }
+
+  function addRow() {
+    const tableBody = document.querySelector("#taskTable tbody");
+    const newRow = document.createElement("tr");
+    newRow.innerHTML = `
+      <td><input type="text" class="partIDInput" oninput="highlightDuplicates()"></td>
+      <td><input type="date" class="promDateInput"></td>
+      <td><input type="number" class="owingInput" oninput="calculateTotalTestTime()"></td>
+      <td>
+        <select class="hotJobSelect" onchange="highlightRow(this)">
+          ${hotJobOptions.map(option => `<option>${option}</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <select class="statusSelect" style="width: 200px;">
+          ${statusOptions.map(option => `<option>${option}</option>`).join('')}
+        </select>
+      </td>
+      <td><input type="number" class="progTimeInput"></td>
+      <td><input type="number" class="debugTimeInput"></td>
+      <td><input type="number" class="testTimeInput" oninput="calculateTotalTestTime()"></td>
+      <td><input type="number" class="totalTestTimeInput" readonly></td>
+      <td><input type="number" class="totalTestTimeHrsInput" readonly></td>
+      <td>
+        <select class="clinkPhaseSelect">
+          ${teamOptions.map(option => `<option>${option}</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <select class="debuggingSelect">
+          ${teamOptions.map(option => `<option>${option}</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <select class="testingSelect">
+          ${teamOptions.map(option => `<option>${option}</option>`).join('')}
+        </select>
+      </td>
+      <td>
+        <select class="teamSelect">
+          ${teamOptions.map(option => `<option>${option}</option>`).join('')}
+        </select>
+      </td>
+      <td><input type="text" class="progInput"></td>
+      <td><input type="text" class="debugInput"></td>
+      <td><input type="text" class="testInput"></td>
+      <td><input type="number" class="hoursInput"></td>
+      <td><input type="text" class="notesInput"></td>
+      <td><button class="deleteButton" onclick="deleteRow(this)">Delete</button></td>
+    `;
+    tableBody.appendChild(newRow);
+  }
+
+  function deleteRow(button) {
+    const row = button.closest("tr");
+    if (confirm("Are you sure you want to delete this task?")) {
+      row.remove();
+    }
+  }
+
+  function highlightDuplicates() {
+    const partIDInputs = document.querySelectorAll(".partIDInput");
+    const partIDs = {};
+    partIDInputs.forEach(input => {
+      const value = input.value.trim();
+      if (value) {
+        partIDs[value] = (partIDs[value] || 0) + 1;
+      }
+    });
+    partIDInputs.forEach(input => {
+      if (partIDs[input.value.trim()] > 1) {
+        input.classList.add('duplicate');
+      } else {
+        input.classList.remove('duplicate');
+      }
+    });
+  }
+
+  function calculateTotalTestTime() {
+    const tableBody = document.querySelector("#taskTable tbody");
+    tableBody.querySelectorAll("tr").forEach(row => {
+      const testTime = Number(row.querySelector(".testTimeInput").value) || 0;
+      const owing = Number(row.querySelector(".owingInput").value) || 0;
+      const totalTestTime = testTime + owing;
+      row.querySelector(".totalTestTimeInput").value = totalTestTime;
+      row.querySelector(".totalTestTimeHrsInput").value = (totalTestTime / 60).toFixed(2);
+    });
+  }
+
+  // UPDATED CODE: Update hours when team member is selected
+  function updateHours(selectElement) {
+    const selectedTeamMember = selectElement.value;
+    const hoursInput = selectElement.closest('tr').querySelector('.teamHoursInput');
+    const tableBody = document.querySelector("#taskTable tbody");
+    let totalHours = 0;
+
+    // Check clinkPhase column
+    tableBody.querySelectorAll("tr").forEach(row => {
+      const clinkPhaseValue = row.querySelector(".clinkPhaseSelect").value;
+      const progTimeValue = Number(row.querySelector(".progTimeInput").value) || 0;
+
+      if (clinkPhaseValue === selectedTeamMember) {
+        totalHours += progTimeValue;
+      }
+    });
+
+    // Check debugging column
+    tableBody.querySelectorAll("tr").forEach(row => {
+      const debuggingValue = row.querySelector(".debuggingSelect").value;
+      const debugTimeValue = Number(row.querySelector(".debugTimeInput").value) || 0;
+
+      if (debuggingValue === selectedTeamMember) {
+        totalHours += debugTimeValue;
+      }
+    });
+
+    // Check testing column
+    tableBody.querySelectorAll("tr").forEach(row => {
+      const testingValue = row.querySelector(".testingSelect").value;
+      const totalTestTimeValue = Number(row.querySelector(".totalTestTimeHrsInput").value) || 0;
+
+      if (testingValue === selectedTeamMember) {
+        totalHours += totalTestTimeValue;
+      }
+    });
+
+    hoursInput.value = totalHours; // Update the hours input with the total
+  }
+
+  window.onload = loadTaskTable;
+</script>
+</body>
+</html>
