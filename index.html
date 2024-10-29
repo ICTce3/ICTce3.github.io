@@ -420,7 +420,7 @@ td {
     tableBody.querySelectorAll("tr").forEach(row => {
       const testTime = Number(row.querySelector(".testTimeInput").value) || 0;
       const owing = Number(row.querySelector(".owingInput").value) || 0;
-      const totalTestTime = testTime + owing;
+      const totalTestTime = testTime * owing;
       row.querySelector(".totalTestTimeInput").value = totalTestTime;
       row.querySelector(".totalTestTimeHrsInput").value = (totalTestTime / 60).toFixed(2);
     });
